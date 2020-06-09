@@ -5895,7 +5895,7 @@ SAME__EEE={
     'EWW' : 'Extreme Wind Warning',
     'SSA' : 'Storm Surge Watch',
     'SSW' : 'Storm Surge Warning',
-    'FSW' :	'Flash Freeze Warning',
+    'FSW' : 'Flash Freeze Warning',
     'FZW' : 'Freeze Warning',
     'HLS' : 'Hurricane Local Statement',
     'SMW' : 'Special Marine Warning',
