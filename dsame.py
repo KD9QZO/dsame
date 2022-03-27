@@ -2,13 +2,13 @@
 #
 # Copyright (C) 2017 Joseph W. Metcalf
 #
-# Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby 
+# Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
 # granted, provided that the above copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING 
-# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, 
-# DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
-# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE 
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL,
+# DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 # USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
@@ -20,11 +20,12 @@ import logging
 import datetime
 import time
 import subprocess
-    
+
+
 def alert_start(JJJHHMM, format='%j%H%M'):
     import calendar
     """Convert EAS date string to datetime format"""
-    utc_dt=datetime.datetime.strptime(JJJHHMM, format).replace(datetime.datetime.utcnow().year)
+    utc_dt = datetime.datetime.strptime(JJJHHMM, format).replace(datetime.datetime.utcnow().year)
     timestamp = calendar.timegm(utc_dt.timetuple())
     return datetime.datetime.fromtimestamp(timestamp)
 
@@ -38,33 +39,35 @@ def format_error(info=''):
     logging.warning(' '.join(['INVALID FORMAT', info]))
 
 def time_str(x, type='hour'):
-    if x==1:
-        return ''.join([str(x),' ',type])
-    elif x>=2:
-        return ''.join([str(x),' ',type,'s'])
-    
+    if x == 1:
+        return ''.join([str(x), ' ', type])
+    elif x >= 2:
+        return ''.join([str(x), ' ', type, 's'])
+
 def get_length(TTTT):
-    hh,mm=TTTT[:2],TTTT[2:]  
+    hh, mm = TTTT[:2], TTTT[2:]
     return ' '.join(filter(None, (time_str(int(hh)), time_str(int(mm), type='minute'))))
 
 def county_decode(input, COUNTRY):
-    """Convert SAME county/geographic code to text list"""
-    P, SS, CCC, SSCCC=input[:1], input[1:3], input[3:], input[1:]
-    if COUNTRY=='US':
+    """
+    Convert SAME county/geographic code to text list
+    """
+    P, SS, CCC, SSCCC = input[:1], input[1:3], input[3:], input[1:]
+    if COUNTRY == 'US':
         if SSCCC in defs.SAME_CTYB:
-            SAME__LOC=defs.SAME_LOCB
+            SAME__LOC = defs.SAME_LOCB
         else:
-            SAME__LOC=defs.SAME_LOCA
-        if CCC=='000':
-            county='ALL'
+            SAME__LOC = defs.SAME_LOCA
+        if CCC == '000':
+            county = 'ALL'
         else:
-            county=defs.US_SAME_CODE[SSCCC]
+            county = defs.US_SAME_CODE[SSCCC]
         return [' '.join(filter(None, (SAME__LOC[P], county))), defs.US_SAME_AREA[SS]]
     else:
-        if CCC=='000':
-            county='ALL'
+        if CCC == '000':
+            county = 'ALL'
         else:
-            county=defs.CA_SAME_CODE[SSCCC]
+            county = defs.CA_SAME_CODE[SSCCC]
         return [county, defs.CA_SAME_AREA[SS]]
 
 def get_division(input, COUNTRY='US'):
@@ -97,11 +100,11 @@ def get_indicator(input):
         pass
     return indicator
 
-def printf(output=''):   
-    output=output.lstrip(' ')
-    output=' '.join(output.split())
+def printf(output=''):
+    output = output.lstrip(' ')
+    output = ' '.join(output.split())
     sys.stdout.write(''.join([output, '\n']))
- 
+
 def alert_end(JJJHHMM, TTTT):
     alertstart = alert_start(JJJHHMM)
     delta = datetime.timedelta(hours = int(TTTT[:2]), minutes=int(TTTT[2:]))
@@ -111,11 +114,11 @@ def alert_length(TTTT):
     delta = datetime.timedelta(hours = int(TTTT[:2]), minutes=int(TTTT[2:]))
     return delta.seconds
 
-def get_location(STATION=None, TYPE=None): 
-    location=''
-    if TYPE=='NWS':
+def get_location(STATION=None, TYPE=None):
+    location = ''
+    if TYPE == 'NWS':
         try:
-            location=defs.WFO_LIST[STATION]
+            location = defs.WFO_LIST[STATION]
         except:
             pass
     return location
@@ -124,7 +127,7 @@ def check_watch(watch_list, PSSCCC_list, event_list, EEE):
     if not watch_list:
         watch_list=PSSCCC_list
     if not event_list:
-        event_list=[EEE] 
+        event_list=[EEE]
     w, p = [],[]
     w += [item[1:] for item in watch_list]
     p += [item[1:] for item in PSSCCC_list]
@@ -138,7 +141,7 @@ def kwdict(**kwargs):
 
 def format_message(command, ORG='WXR', EEE='RWT',PSSCCC=[],TTTT='0030',JJJHHMM='0010000', STATION=None, TYPE=None, LLLLLLLL=None, COUNTRY='US', LANG='EN', MESSAGE=None,**kwargs):
     return command.format(ORG=ORG, EEE=EEE, TTTT=TTTT, JJJHHMM=JJJHHMM, STATION=STATION, TYPE=TYPE, LLLLLLLL=LLLLLLLL, COUNTRY=COUNTRY, LANG=LANG, event=get_event(EEE), type=get_indicator(EEE), end=fn_dt(alert_end(JJJHHMM,TTTT)), start=fn_dt(alert_start(JJJHHMM)), organization=defs.SAME__ORG[ORG]['NAME'][COUNTRY], PSSCCC='-'.join(PSSCCC), location=get_location(STATION, TYPE), date=fn_dt(datetime.datetime.now(),'%c'), length=get_length(TTTT), seconds=alert_length(TTTT), MESSAGE=MESSAGE, **kwargs)
- 
+
 def readable_message(ORG='WXR',EEE='RWT',PSSCCC=[],TTTT='0030',JJJHHMM='0010000',STATION=None, TYPE=None, LLLLLLLL=None, COUNTRY='US', LANG='EN'):
     import textwrap
     printf()
@@ -149,7 +152,7 @@ def readable_message(ORG='WXR',EEE='RWT',PSSCCC=[],TTTT='0030',JJJHHMM='0010000'
         county, state=county_decode(item, COUNTRY)
         if current_state != state:
             DIVISION=get_division(PSSCCC[idx][1:3], COUNTRY)
-            output=defs.MSG__TEXT[LANG]['MSG2'].format(conjunction='' if idx == 0 else defs.MSG__TEXT[LANG]['AND'], state=state, division=DIVISION) 
+            output=defs.MSG__TEXT[LANG]['MSG2'].format(conjunction='' if idx == 0 else defs.MSG__TEXT[LANG]['AND'], state=state, division=DIVISION)
             MSG+=[''.join(output)]
             current_state=state
         MSG+=[defs.MSG__TEXT[LANG]['MSG3'].format(county=county if county != state else defs.MSG__TEXT[LANG]['ALL'].upper(),punc=',' if idx !=len(PSSCCC)-1 else '.')]
@@ -166,18 +169,18 @@ def clean_msg(same):
     same = same.upper()                                                 # Uppercase
     msgidx=same.find('ZCZC')
     if msgidx != -1:
-        same=same[msgidx:]                                              # Left Offset 
+        same=same[msgidx:]                                              # Left Offset
     same = ''.join(same.split())                                        # Remove whitespace
     same = ''.join(filter(lambda x: x in valid_chars, same))       # Valid ASCII codes only
     slen= len(same)-1
     if same[slen] !='-':
-        ridx=same.rfind('-') 
+        ridx=same.rfind('-')
         offset = slen-ridx
         if (offset <= 8):
             same=''.join([same.ljust(slen+(8-offset)+1,'?'), '-'])      # Add final dash and/or pad location field
-              
+
     return same
-   
+
 def same_decode(same, lang, same_watch=None, event_watch=None, text=True, call=None, command=None, jsonfile=None):
     try:
         same = clean_msg(same)
@@ -192,7 +195,7 @@ def same_decode(same, lang, same_watch=None, event_watch=None, text=True, call=N
             S1,S2=same[msgidx:].split('+')
         except:
             format_error()
-            return           
+            return
         try:
             ZCZC, ORG, EEE, PSSCCC=S1.split('-',3)
         except:
@@ -204,7 +207,7 @@ def same_decode(same, lang, same_watch=None, event_watch=None, text=True, call=N
             PSSCCC_list=PSSCCC.split('-')
         except:
             format_error()
-        
+
         try:
             TTTT,JJJHHMM,LLLLLLLL,tail=S2.split('-')
         except:
@@ -259,10 +262,10 @@ def same_decode(same, lang, same_watch=None, event_watch=None, text=True, call=N
                     import json
                     data=kwdict(ORG=ORG, EEE=EEE, TTTT=TTTT, JJJHHMM=JJJHHMM, STATION=STATION, TYPE=TYPE, LLLLLLLL=LLLLLLLL, COUNTRY=COUNTRY, LANG=lang, event=get_event(EEE), type=get_indicator(EEE), end=fn_dt(alert_end(JJJHHMM,TTTT)), start=fn_dt(alert_start(JJJHHMM)), organization=defs.SAME__ORG[ORG]['NAME'][COUNTRY], PSSCCC=PSSCCC, PSSCCC_list=PSSCCC_list, location=get_location(STATION, TYPE), date=fn_dt(datetime.datetime.now(),'%c'), length=get_length(TTTT), seconds=alert_length(TTTT), MESSAGE=MESSAGE)
                     with open(jsonfile, 'w') as outfile:
-                        json.dump(data, outfile)               
+                        json.dump(data, outfile)
                 except Exception as detail:
                         logging.error(detail)
-                        return           
+                        return
             if command:
                 if call:
                     l_cmd=[]
@@ -286,7 +289,7 @@ def same_decode(same, lang, same_watch=None, event_watch=None, text=True, call=N
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description=defs.DESCRIPTION, prog=defs.PROGRAM,  fromfile_prefix_chars='@')
-    parser.add_argument('--msg', help='message to decode')        
+    parser.add_argument('--msg', help='message to decode')
     parser.add_argument('--same', nargs='*', help='filter by SAME code')
     parser.add_argument('--event', nargs='*', help='filter by event code')
     parser.add_argument('--lang', default='EN', help='set language')
@@ -301,7 +304,7 @@ def parse_arguments():
     parser.set_defaults(text=True)
     args, unknown = parser.parse_known_args()
     return args
-    
+
 def main():
     args=parse_arguments()
     logging.basicConfig(level=args.loglevel,format='%(levelname)s: %(message)s')
